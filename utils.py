@@ -4,7 +4,7 @@ import torch
 import pandas as pd
 
 
-def train_model(args, model, traindataloader, train_rate, criterion, optimizer, num_epochs=25, device=torch.device('cuda:7')):
+def train_model(args, model, traindataloader, train_rate, criterion, optimizer, num_epochs=25, device=torch.device('cuda:7'), save_path=None):
     model = model.to(device)
 
     batch_num = len(traindataloader)
@@ -18,7 +18,6 @@ def train_model(args, model, traindataloader, train_rate, criterion, optimizer, 
     since = time.time()
 
     for epoch in range(num_epochs):
-        # print('Epoch {}/{}'.format(epoch, num_epochs-1))
         print('-'*100)
 
         train_loss = 0.0
@@ -60,10 +59,10 @@ def train_model(args, model, traindataloader, train_rate, criterion, optimizer, 
         print("Epoch: {}/{}\tTrain Loss: {:.4f}\tTrain Acc: {:.4f}".format(epoch + 1, num_epochs, train_loss_all[-1], train_acc_all[-1]))
         print('Epoch: {}/{}\tVal Loss: {:.4f}\tval Acc: {:.4f}'.format(epoch + 1, num_epochs, val_loss_all[-1], val_acc_all[-1]))
 
-        if val_loss_all[-1] > best_acc:
+        if val_acc_all[-1] > best_acc:
             best_acc = val_acc_all[-1]
             best_model_wts = copy.deepcopy(model.state_dict())
-            torch.save(model.state_dict(), f'./weights/best_{args.model}_{args.dataset}_{args.lr}_{args.epoch}.pt')
+            torch.save(model.state_dict(), f'./{save_path}/best_{args.model}_{args.dataset}_{args.lr}_{args.epoch}.pt')
 
         time_use = time.time() - since
         print("Train and val complete in {:.0f}m {:.0f}s".format(time_use // 60, time_use % 60))
