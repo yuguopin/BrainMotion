@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score, confusion_matrix
 import seaborn as sns
 import torch
 import torch.nn as nn
@@ -49,13 +49,13 @@ if __name__ == '__main__':
 
     if args.model == 'BrainEmotion':
         myconvnet = BrainEmotion(args=args)
-        save_path = f'./res_BrainEmotion/{formatted_time}'
+        save_path = f'./res_BrainEmotion/{formatted_time}_{lr}_{epoches}_{args.dataset}'
     elif args.model == 'CNN':
         myconvnet = MyConvNet(args=args)
-        save_path = f'./res_CNN/{formatted_time}'
+        save_path = f'./res_CNN/{formatted_time}_{lr}_{epoches}_{args.dataset}'
     else:
         myconvnet = MyConvNetPlus(args=args)
-        save_path = f'./res_CNNPlus/{formatted_time}'
+        save_path = f'./res_CNNPlus/{formatted_time}_{lr}_{epoches}_{args.dataset}'
         
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(myconvnet.parameters(), lr=lr)
     criterion = nn.CrossEntropyLoss().to(device)
     myconvnet, train_process = train_model(args=args, model=myconvnet, traindataloader=train_loader, criterion=criterion,
-                                           optimizer=optimizer, num_epochs=epoches, train_rate=0.8, device=device)
+                                           optimizer=optimizer, num_epochs=epoches, train_rate=0.8, device=device, save_path=save_path)
 
     plt.figure(figsize=(12, 4))
 
