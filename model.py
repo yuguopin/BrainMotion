@@ -94,11 +94,11 @@ class MyConvNetPlus(nn.Module):
         
         if args.dataset == 'FashionMNIST':
             self.input_channel = 1
-            self.fc_dim = 32 * 7 * 7
+            self.fc_dim = 32 * 3 * 3
             self.out_dim = 10
         elif args.dataset == 'CIFAR100':
             self.input_channel = 3
-            self.fc_dim = 32 * 8 * 8
+            self.fc_dim = 32 * 3 * 3
             self.out_dim = 100
         else:
             self.input_channel = 0
@@ -113,26 +113,36 @@ class MyConvNetPlus(nn.Module):
                 stride=1,
                 padding=1,
             ),
-            nn.Conv2d(
-                in_channels=16,
-                out_channels=16,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-            ),
-            nn.Conv2d(
-                in_channels=16,
-                out_channels=16,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-            ),
+            nn.BatchNorm2d(16),
             nn.ReLU(),
-            nn.AvgPool2d(kernel_size=2, stride=2)
+            
+            nn.Conv2d(
+                in_channels=16,
+                out_channels=16,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+            ),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            
+            nn.Conv2d(
+                in_channels=16,
+                out_channels=16,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+            ),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2)
         )
 
         self.conv2 = nn.Sequential(
-            nn.Conv2d(16, 32, 1, 1, 0),
+            nn.Conv2d(16, 32, 1, 1, 1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            
             nn.Conv2d(
                 in_channels=32,
                 out_channels=32,
@@ -140,6 +150,9 @@ class MyConvNetPlus(nn.Module):
                 stride=1,
                 padding=1,
             ),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            
             nn.Conv2d(
                 in_channels=32,
                 out_channels=32,
@@ -147,12 +160,67 @@ class MyConvNetPlus(nn.Module):
                 stride=1,
                 padding=1,
             ),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
         )
+        
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(32, 64, 1, 1, 1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels=64,
+                out_channels=64,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+            ),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels=64,
+                out_channels=64,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+            ),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+        )
+        
+        self.conv4 = nn.Sequential(
+            nn.Conv2d(64, 32, 1, 1, 1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels=32,
+                out_channels=32,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+            ),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels=32,
+                out_channels=32,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+            ),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+        )
+        
         self.classifier = nn.Sequential(
-            nn.Linear(self.fc_dim, 256),  # CIFAR100
-            # nn.Linear(32 * 7 * 7, 256), # FashionMNIST
+            nn.Linear(self.fc_dim, 256), 
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
@@ -162,6 +230,8 @@ class MyConvNetPlus(nn.Module):
     def forward(self, x):
         x = self.conv1(x)
         x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.conv4(x)
         # print(x.shape)
         x = x.view(x.size(0), -1)
         output = self.classifier(x)
