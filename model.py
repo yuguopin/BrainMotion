@@ -8,11 +8,11 @@ class MyConvNet(nn.Module):
         
         if args.dataset == 'FashionMNIST':
             self.input_channel = 1
-            self.fc_dim = 32 * 6 * 6
+            self.fc_dim = 32 * 3 * 3
             self.out_dim = 10
         elif args.dataset == 'CIFAR100':
             self.input_channel = 3
-            self.fc_dim = 32 * 7 * 7
+            self.fc_dim = 32 * 4 * 4
             self.out_dim = 100
         else:
             self.input_channel = 0
@@ -27,18 +27,49 @@ class MyConvNet(nn.Module):
                 stride=1,
                 padding=1,
             ),
+            nn.BatchNorm2d(16),
             nn.ReLU(),
-            nn.AvgPool2d(kernel_size=2, stride=2)
+            
+            nn.Conv2d(16, 16, 3, 1, 1),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            
+            nn.MaxPool2d(kernel_size=2, stride=2)
         )
 
         self.conv2 = nn.Sequential(
-            nn.Conv2d(16, 32, 3, 1, 0),
+            nn.Conv2d(16, 32, 3, 1, 1),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
+            
+            nn.Conv2d(32, 32, 3, 1, 1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            
+            nn.MaxPool2d(2, 2)
+        )
+        
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(32, 64, 3, 1, 1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            
+            nn.Conv2d(64, 64, 3, 1, 1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            
             nn.MaxPool2d(2, 2),
         )
+        
+        self.conv4 = nn.Sequential(
+            nn.Conv2d(64, 32, 3, 1, 1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            # nn.MaxPool2d(2, 2),
+        )
+        
         self.classifier = nn.Sequential(
-            nn.Linear(self.fc_dim, 256), # CIFAR100
-            # nn.Linear(32 * 6 * 6, 256), # FashionMNIST
+            nn.Linear(self.fc_dim, 256), 
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
@@ -48,6 +79,8 @@ class MyConvNet(nn.Module):
     def forward(self, x):
         x = self.conv1(x)
         x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.conv4(x)
         # print(x.shape)
         x = x.view(x.size(0), -1)
         output = self.classifier(x)
@@ -145,8 +178,8 @@ class BrainEmotionConvLayer(nn.Module):
         self.out_dim = out_dim
         
         self.conv1x1_embed = nn.Conv2d(in_channels=self.input_dim, out_channels=self.embed_dim, kernel_size=1)
-        self.conv_cortex = nn.Conv2d(in_channels=self.embed_dim, out_channels=self.out_dim, kernel_size=3)
-        self.conv_body = nn.Conv2d(in_channels=self.embed_dim+1, out_channels=self.out_dim, kernel_size=3)
+        self.conv_cortex = nn.Conv2d(in_channels=self.embed_dim, out_channels=self.out_dim, kernel_size=3, padding=1)
+        self.conv_body = nn.Conv2d(in_channels=self.embed_dim+1, out_channels=self.out_dim, kernel_size=3, padding=1)
     
 
     def forward(self, input_data):
@@ -177,11 +210,11 @@ class BrainEmotion(nn.Module):
         
         if args.dataset == 'FashionMNIST':
             self.input_channel = 1
-            self.fc_dim = 32 * 5 * 5
+            self.fc_dim = 32 * 3 * 3
             self.out_dim = 10
         elif args.dataset == 'CIFAR100':
             self.input_channel = 3
-            self.fc_dim = 32 * 6 * 6
+            self.fc_dim = 32 * 4 * 4
             self.out_dim = 100
         else:
             self.input_channel = 0
@@ -190,20 +223,54 @@ class BrainEmotion(nn.Module):
             
         self.conv1 = nn.Sequential(
             BrainEmotionConvLayer(input_dim=self.input_channel, embed_dim=16, out_dim=16),
+            nn.BatchNorm2d(16),
             nn.ReLU(),
-            nn.AvgPool2d(kernel_size=2, stride=2)
+            
+            BrainEmotionConvLayer(input_dim=16, embed_dim=32, out_dim=16),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            
+            nn.MaxPool2d(kernel_size=2, stride=2)
         )
 
         self.conv2 = nn.Sequential(
             BrainEmotionConvLayer(input_dim=16, embed_dim=32, out_dim=32),
-            # nn.Conv2d(16, 32, 3, 1, 0),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
+            
+            BrainEmotionConvLayer(input_dim=32, embed_dim=32, out_dim=32),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            
             nn.MaxPool2d(2, 2),
         )
         
+        self.conv3 = nn.Sequential(
+            BrainEmotionConvLayer(input_dim=32, embed_dim=64, out_dim=64),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            
+            BrainEmotionConvLayer(input_dim=64, embed_dim=64, out_dim=64),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            
+            nn.MaxPool2d(2, 2),
+        )
+        
+        self.conv4 = nn.Sequential(
+            BrainEmotionConvLayer(input_dim=64, embed_dim=32, out_dim=32),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            
+            BrainEmotionConvLayer(input_dim=32, embed_dim=32, out_dim=32),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            
+            # nn.MaxPool2d(2, 2),
+        )
+        
         self.classifier = nn.Sequential(
-            nn.Linear(self.fc_dim, 256),  # CIFAR100
-            # nn.Linear(32 * 5 * 5, 256), # FashionMNIST
+            nn.Linear(self.fc_dim, 256), 
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
@@ -213,6 +280,8 @@ class BrainEmotion(nn.Module):
     def forward(self, x):
         x = self.conv1(x)
         x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.conv4(x)
         # print(x.shape)
         x = x.view(x.size(0), -1)
         output = self.classifier(x)
