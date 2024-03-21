@@ -5,20 +5,27 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 
-bs_size = 64
+bs_size = 128
 
 # ======================= CIFAR100 =====================
-train_data_CIFAR100 = CIFAR100(root="./data/CIFAR100", train=True, transform=transforms.ToTensor(), download=True)
+CIFAR_transform = transforms.Compose([
+    transforms.Resize(224),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+])
+
+train_data_CIFAR100 = CIFAR100(root="./data/CIFAR100", train=True, transform=CIFAR_transform, download=True)
 train_loader_CIFAR100 = Data.DataLoader(dataset=train_data_CIFAR100, batch_size=bs_size, shuffle=False)
 
 class_label_CIFAR100 = train_data_CIFAR100.classes
 # class_label_CIFAR100[0] = "T-shirt"
     
-test_data_CIFAR100 = CIFAR100(root="./data/CIFAR100", train=False, download=True)
+test_data_CIFAR100 = CIFAR100(root="./data/CIFAR100", train=False, transform=CIFAR_transform, download=True)
+test_loader_CIFAR100 = Data.DataLoader(dataset=test_data_CIFAR100, batch_size=bs_size, shuffle=False)
 
-test_data_x_CIFAR100 = torch.from_numpy(test_data_CIFAR100.data / 255.0).float()
-test_data_x_CIFAR100 = test_data_x_CIFAR100.permute(0, 3, 1, 2)
-test_data_y_CIFAR100 = torch.tensor(test_data_CIFAR100.targets)
+# test_data_x_CIFAR100 = torch.from_numpy(test_data_CIFAR100.data / 255.0).float()
+# test_data_x_CIFAR100 = test_data_x_CIFAR100.permute(0, 3, 1, 2)
+# test_data_y_CIFAR100 = torch.tensor(test_data_CIFAR100.targets)
 # print(test_data_y_CIFAR100.shape)
 
 # =============== FashionMNSIT ===================== 

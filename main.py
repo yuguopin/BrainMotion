@@ -10,17 +10,18 @@ from datetime import datetime
 
 from model import MyConvNet, BrainEmotion, MyConvNetPlus
 from utils import train_model
-from datasets import train_loader_FashionMNIST, test_data_x_FashionMNIST, test_data_y_FashionMNIST, class_label_FashionMNIST
-from datasets import train_loader_CIFAR100, test_data_x_CIFAR100, test_data_y_CIFAR100, class_label_CIFAR100
+from my_dataset import train_loader_FashionMNIST, test_data_x_FashionMNIST, test_data_y_FashionMNIST, class_label_FashionMNIST
+from my_dataset import train_loader_CIFAR100, test_loader_CIFAR100, class_label_CIFAR100
+from my_resnet import resnet34
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Some hyperparameters')
 
-    parser.add_argument('--model', type=str, choices=['CNN', 'BrainEmotion', 'CNNPlus'], default='CNN')
-    parser.add_argument('--lr', type=float, default='0.0001')
-    parser.add_argument('--epoch', type=int, default='30')
-    parser.add_argument('--device', type=str, default='cuda:7')
+    parser.add_argument('--model', type=str, choices=['CNN', 'BrainEmotion', 'CNNPlus', 'resnet34'], default='resnet34')
+    parser.add_argument('--lr', type=float, default='0.001')
+    parser.add_argument('--epoch', type=int, default='10')
+    parser.add_argument('--device', type=str, default='cuda:4')
     parser.add_argument('--dataset', type=str, default='CIFAR100', choices=['FashionMNIST', 'CIFAR100'])
 
     args = parser.parse_args()
@@ -37,8 +38,9 @@ if __name__ == '__main__':
         class_label = class_label_FashionMNIST
     elif args.dataset == 'CIFAR100':
         train_loader = train_loader_CIFAR100
-        test_data_x = test_data_x_CIFAR100
-        test_data_y = test_data_y_CIFAR100
+        test_loader = test_loader_CIFAR100
+        # test_data_x = test_data_x_CIFAR100
+        # test_data_y = test_data_y_CIFAR100
         class_label = class_label_CIFAR100
     else:
         pass
@@ -53,9 +55,12 @@ if __name__ == '__main__':
     elif args.model == 'CNN':
         myconvnet = MyConvNet(args=args)
         save_path = f'./res_CNN/{formatted_time}_{lr}_{epoches}_{args.dataset}'
-    else:
+    elif args.model == 'CNNPlus':
         myconvnet = MyConvNetPlus(args=args)
         save_path = f'./res_CNNPlus/{formatted_time}_{lr}_{epoches}_{args.dataset}'
+    else:
+        myconvnet = resnet34(num_classes=100)
+        save_path = f'./resnet34/{formatted_time}_{lr}_{epoches}_{args.dataset}'
         
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -89,21 +94,39 @@ if __name__ == '__main__':
 
     # ====== 测试模型 =======
     myconvnet.eval()
-    output = myconvnet(test_data_x.to(device))
-    pre_lab = torch.argmax(output, 1)
-    test_data_ya = test_data_y.detach().numpy()
-    pre_laba = pre_lab.cpu().detach().numpy()
-    acc = accuracy_score(test_data_ya, pre_laba)
-    print("ACC Test:", acc)
+    
+    test_loss = 0
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(test_loader):
+            inputs, targets = inputs.to(device), targets.to(device)
+            outputs = myconvnet(torch.squeeze(inputs, 1))
+            loss = criterion(outputs, targets)
+            test_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
+            print(f'Loss: %.3f | Acc: %.3f%% (%d/%d)' % (test_loss / (batch_idx+1), 100.* correct / total, correct, total))
+            
+    # output = myconvnet(test_data_x.to(device))
+    # pre_lab = torch.argmax(output, 1)
+    # test_data_ya = test_data_y.detach().numpy()
+    # pre_laba = pre_lab.cpu().detach().numpy()
+    # acc = accuracy_score(test_data_ya, pre_laba)
+    # print("ACC Test:", acc)
+    
+    acc = 100. * correct / total
     
     with open(f'./{save_path}/test_{lr}_{epoches}_{args.dataset}.txt', 'w') as f:
         f.write(f'Test acc: {acc:.3f}') 
 
-    plt.figure(figsize=(12, 12))
-    conf_mat = confusion_matrix(test_data_ya, pre_laba)
-    df_cm = pd.DataFrame(conf_mat, index=class_label, columns=class_label)
-    heatmap = sns.heatmap(df_cm, annot=True, fmt="d", cmap="YlGnBu")
-    heatmap.yaxis.set_ticklabels(heatmap.yaxis.get_ticklabels(), rotation=0, ha="right")
-    plt.ylabel('True label')
-    plt.xlabel("Predicted label")
-    plt.savefig(f'./{save_path}/eval_{lr}_{epoches}_{args.dataset}.jpg', dpi=600)
+    # plt.figure(figsize=(12, 12))
+    # conf_mat = confusion_matrix(test_data_ya, pre_laba)
+    # df_cm = pd.DataFrame(conf_mat, index=class_label, columns=class_label)
+    # heatmap = sns.heatmap(df_cm, annot=True, fmt="d", cmap="YlGnBu")
+    # heatmap.yaxis.set_ticklabels(heatmap.yaxis.get_ticklabels(), rotation=0, ha="right")
+    # plt.ylabel('True label')
+    # plt.xlabel("Predicted label")
+    # plt.savefig(f'./{save_path}/eval_{lr}_{epoches}_{args.dataset}.jpg', dpi=600)

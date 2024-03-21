@@ -59,15 +59,16 @@ def train_model(args, model, traindataloader, train_rate, criterion, optimizer, 
         print("Epoch: {}/{}\tTrain Loss: {:.4f}\tTrain Acc: {:.4f}".format(epoch + 1, num_epochs, train_loss_all[-1], train_acc_all[-1]))
         print('Epoch: {}/{}\tVal Loss: {:.4f}\tval Acc: {:.4f}'.format(epoch + 1, num_epochs, val_loss_all[-1], val_acc_all[-1]))
 
-        if val_acc_all[-1] > best_acc:
-            best_acc = val_acc_all[-1]
-            best_model_wts = copy.deepcopy(model.state_dict())
-            torch.save(model.state_dict(), f'./{save_path}/best_{args.model}_{args.dataset}_{args.lr}_{args.epoch}.pt')
-
         time_use = time.time() - since
         print("Train and val complete in {:.0f}m {:.0f}s".format(time_use // 60, time_use % 60))
+        
+        # if val_acc_all[-1] > best_acc:
+        best_acc = val_acc_all[-1]
+        best_model_wts = copy.deepcopy(model.state_dict())
+        torch.save(model.state_dict(
+        ), f'./{save_path}/best_{args.model}_{args.dataset}_{args.lr}_{args.epoch}.pt')
 
-    model.load_state_dict(best_model_wts)
+    # model.load_state_dict(best_model_wts)
 
     train_process = pd.DataFrame(
         data={"epoch": range(num_epochs),
