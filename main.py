@@ -18,7 +18,7 @@ from my_resnet import resnet34
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Some hyperparameters')
 
-    parser.add_argument('--model', type=str, choices=['CNN', 'BrainEmotion', 'CNNPlus', 'resnet34'], default='resnet34')
+    parser.add_argument('--model', type=str, choices=['CNN', 'BrainEmotion', 'CNNPlus', 'resnet34', 'resnet34Brain'], default='resnet34Brain')
     parser.add_argument('--lr', type=float, default='0.001')
     parser.add_argument('--epoch', type=int, default='10')
     parser.add_argument('--device', type=str, default='cuda:4')
@@ -45,7 +45,6 @@ if __name__ == '__main__':
     else:
         pass
     
-    
     current_time = datetime.now()
     formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -58,14 +57,21 @@ if __name__ == '__main__':
     elif args.model == 'CNNPlus':
         myconvnet = MyConvNetPlus(args=args)
         save_path = f'./res_CNNPlus/{formatted_time}_{lr}_{epoches}_{args.dataset}'
-    else:
+    elif args.model == 'resnet34':
         myconvnet = resnet34(num_classes=100)
         save_path = f'./resnet34/{formatted_time}_{lr}_{epoches}_{args.dataset}'
+    elif args.model == 'resnet34Brain':
+        myconvnet = resnet34(num_classes=100, AddBrain=True)
+        save_path = f'./resnet34Brain/{formatted_time}_{lr}_{epoches}_{args.dataset}'
+    else:
+        pass
         
+    # print(myconvnet)
+    
+       
     if not os.path.exists(save_path):
         os.makedirs(save_path)
         
-    # print(myconvnet)
 
     optimizer = torch.optim.Adam(myconvnet.parameters(), lr=lr)
     criterion = nn.CrossEntropyLoss().to(device)

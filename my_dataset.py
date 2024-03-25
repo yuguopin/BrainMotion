@@ -5,7 +5,7 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 
-bs_size = 128
+bs_size = 64
 
 # ======================= CIFAR100 =====================
 CIFAR_transform = transforms.Compose([
