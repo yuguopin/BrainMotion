@@ -7,6 +7,7 @@ import os
 import matplotlib.pyplot as plt
 import argparse
 from datetime import datetime
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from model import MyConvNet, BrainEmotion, MyConvNetPlus
 from utils import train_model
@@ -73,10 +74,11 @@ if __name__ == '__main__':
         os.makedirs(save_path)
         
 
-    optimizer = torch.optim.Adam(myconvnet.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(myconvnet.parameters(), lr=lr, weight_decay=0.01)
+    scheduler = CosineAnnealingLR(optimizer, T_max=args.epoch, eta_min=1e-5)
     criterion = nn.CrossEntropyLoss().to(device)
     myconvnet, train_process = train_model(args=args, model=myconvnet, traindataloader=train_loader, criterion=criterion,
-                                           optimizer=optimizer, num_epochs=epoches, train_rate=0.8, device=device, save_path=save_path)
+                                           optimizer=optimizer, num_epochs=epoches, train_rate=0.8, device=device, save_path=save_path, scheduler=scheduler)
 
     plt.figure(figsize=(12, 4))
 

@@ -2,9 +2,10 @@ import copy
 import time
 import torch
 import pandas as pd
+import numpy as np
 
 
-def train_model(args, model, traindataloader, train_rate, criterion, optimizer, num_epochs=25, device=torch.device('cuda:7'), save_path=None):
+def train_model(args, model, traindataloader, train_rate, criterion, optimizer, num_epochs=25, device=torch.device('cuda:7'), save_path=None, scheduler=None):
     model = model.to(device)
 
     batch_num = len(traindataloader)
@@ -50,7 +51,9 @@ def train_model(args, model, traindataloader, train_rate, criterion, optimizer, 
                 val_loss += loss.item()
                 val_correct += torch.sum(pre_lab == b_y.data)
                 val_num += b_y.size(0)
-
+        
+        scheduler.step()
+        
         train_loss_all.append(train_loss / train_num)
         train_acc_all.append(train_corrects.double().item()/train_num)
         val_loss_all.append(val_loss / val_num)
@@ -77,5 +80,15 @@ def train_model(args, model, traindataloader, train_rate, criterion, optimizer, 
               "train_acc_all": train_acc_all,
               "val_acc_all": val_acc_all}
     )
+    
+    data = {
+        'epoch': np.arange(num_epochs),
+        'train_loss': train_acc_all,
+        "val_loss": val_loss,
+        "train_acc": train_acc_all,
+        "val_acc": val_acc_all
+    }
+    df = pd.DataFrame(data)
+    df.to_excel(f'./{save_path}/res.xlsx',index=False)
 
     return model, train_process
